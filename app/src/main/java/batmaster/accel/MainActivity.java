@@ -20,9 +20,11 @@ public class MainActivity extends AppCompatActivity {
     private SensorEventListener listener;
 
     private long lastUpdate = 0;
-    private float last_x, last_y, last_z;
 
     private float maxSpeed = 0;
+
+    // 100 ms
+    private static float UPDATE_RATE = 500;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,28 +41,29 @@ public class MainActivity extends AppCompatActivity {
                 Sensor mySensor = event.sensor;
 
                 if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                    float x = event.values[0];
-                    float y = event.values[1];
-                    float z = event.values[2];
+                    float ax = event.values[0];
+                    float ay = event.values[1];
+                    float az = event.values[2];
 
                     long curTime = System.currentTimeMillis();
 
-                    if ((curTime - lastUpdate) > 100) {
+                    if ((curTime - lastUpdate) > UPDATE_RATE) {
                         long diffTime = (curTime - lastUpdate);
                         lastUpdate = curTime;
 
-                        float speed = Math.abs(x + y + z - last_x - last_y - last_z)/ diffTime * 10000;
+                        // m/s^2 => km/hr
+                        float dx = (float) (ax * Math.pow(UPDATE_RATE / 1000, 2));
+                        float dy = (float) (ay * Math.pow(UPDATE_RATE / 1000, 2));
+                        float dz = (float) (az * Math.pow(UPDATE_RATE / 1000, 2));
 
-                        Log.d("speed", speed + "");
-                        if (speed > maxSpeed) {
-                            maxSpeed = speed;
-                            textView.setText(speed + "");
-                            Log.d("speed max", speed + "");
+                        float d = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
+                        float kmhr = (float) (d * 3600 / UPDATE_RATE);
+
+                        Log.d("axis", dx + " " + dy + " " + dz + " " + d + " " + kmhr);
+                        if (kmhr > maxSpeed) {
+                            maxSpeed = kmhr;
+                            textView.setText(kmhr + "");
                         }
-
-                        last_x = x;
-                        last_y = y;
-                        last_z = z;
                     }
                 }
 
